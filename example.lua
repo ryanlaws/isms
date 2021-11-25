@@ -1,6 +1,14 @@
 --- script
 print("example.lua -------------> hello there")
 
+function rgb4(r,g,b)
+  return 0x110000*(r&0xf) + 0x001100*(g&0xf) + 0x000011*(b&0xf)
+end
+
+function rgb8(r,g,b)
+  return 0x010000*(r&0xff) + 0x000100*(g&0xff) + 0x000001*(b&0xff)
+end
+
 for i=0,255 do
   window.pixel(i,4,0xFFFF00-i);
   window.pixel(i,8,0x00FFFF-i);
@@ -9,27 +17,31 @@ end
 
 window.redraw()
 
-x1,y1,x2,y2,c = 128,80,0,0,0xffffff
+x = 0
+c,r,g,b = 0xff,0xff,0xff,0xff
 
-window.key = function(x)
-  x2 = x1
-  y2 = y1
-  x1 = math.random(192)+32
-  y1 = math.random(64)+32
-  c = c - 0x111111
-  window.line(x1,y1,x2,y2,c)
+function draw()
+  x = (x + 3) % 250
+  c = (c-5) & 0xff
+  window.line(x,160,x+8,80,rgb8(c,c,c))
   window.redraw()
-  osc.send({"localhost",57120},"/n",{x%127})
-  print("key: "..x)
+  print("color: "..string.format("0x%06x", rgb8(c,c,c)))
+end
+
+key = function(k)
+  osc.send({"localhost",57120},"/n",{k%127})
+  draw()
+  print("key: "..k)
 end
 
 metro.tick = function(i,s)
   print("metro",i,s)
+  draw()
   --grid.all(s)
   --grid.redraw()
 end
 
-metro.start(1,0.1,5,0)
+metro.start(0.02,0.02,500,0);
 
 g = grid.connect()
 g.key = function(x,y,z)
